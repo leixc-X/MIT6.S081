@@ -1,0 +1,5 @@
+{
+    "cmake.sourceDirectory": "/home/lxc/coding/MIT-6.s081/gdb-13.1/zlib",
+    "C_Cpp.clang_format_sortIncludes": false,
+    "editor.formatOnSave": true
+}

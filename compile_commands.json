@@ -1,0 +1,29 @@
+[
+    {
+        "arguments": [
+            "riscv64-unknown-elf-gcc",
+            "-c",
+            "-Wall",
+            "-Werror",
+            "-O",
+            "-fno-omit-frame-pointer",
+            "-ggdb",
+            "-DSOL_UTIL",
+            "-DLAB_UTIL",
+            "-mcmodel=medany",
+            "-ffreestanding",
+            "-fno-common",
+            "-nostdlib",
+            "-mno-relax",
+            "-I.",
+            "-fno-stack-protector",
+            "-fno-pie",
+            "-no-pie",
+            "-o",
+            "kernel/bio.o",
+            "kernel/bio.c"
+        ],
+        "directory": "/home/lxc/coding/MIT-6.s081",
+        "file": "kernel/bio.c"
+    }
+]
