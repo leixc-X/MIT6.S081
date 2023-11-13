@@ -114,6 +114,24 @@ printf(char *fmt, ...)
     release(&pr.lock);
 }
 
+void backtrace(void) {
+  // printf("this is backtrace\n");
+  uint64 ra, top, bottom;
+  uint64 fp = r_fp();
+
+  // printf("fp: %p\n", fp);
+ 
+  top = PGROUNDUP(fp);
+  bottom = PGROUNDDOWN(fp);
+  while(fp < top && fp > bottom) {
+    // return address lives at a fixed offset (-8) from the frame pointer of a stackframe
+    ra = *(uint64 *)(fp - 8);
+    printf("%p\n", ra);
+    // saved frame pointer lives at fixed offset (-16) from the frame pointer.
+    fp = *(uint64 *)(fp - 16);
+  }
+}
+
 void
 panic(char *s)
 {
@@ -122,6 +140,7 @@ panic(char *s)
   printf(s);
   printf("\n");
   panicked = 1; // freeze uart output from other CPUs
+  backtrace();
   for(;;)
     ;
 }
