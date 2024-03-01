@@ -123,16 +123,19 @@ mmap_test(void)
   // should be able to map file opened read-only with private writable
   // mapping
   p = mmap(0, PGSIZE*2, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
+  // printf("1111111");
   if (p == MAP_FAILED)
     err("mmap (2)");
   if (close(fd) == -1)
     err("close");
+  // printf("22222222");
   _v1(p);
+  
   for (i = 0; i < PGSIZE*2; i++)
     p[i] = 'Z';
   if (munmap(p, PGSIZE*2) == -1)
     err("munmap (2)");
-
+  
   printf("test mmap private: OK\n");
     
   printf("test mmap read-only\n");

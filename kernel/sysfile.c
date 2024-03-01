@@ -484,3 +484,81 @@ sys_pipe(void)
   }
   return 0;
 }
+
+// void *mmap(void *addr, int length, int prot, int flags, int fd, int off);
+uint64
+sys_mmap(void)
+{
+  uint64 addr;
+  int length, prot, flags, fd, off;
+  struct file *f;
+  
+  if(argaddr(0, &addr) < 0 || argint(1, &length) < 0 || argint(2, &prot) < 0 || argint(3, &flags) < 0 || argfd(4, &fd, &f) < 0 || argint(5, &off) < 0)
+    return -1;
+  
+  if(!f->writable && (prot & PROT_WRITE) && (flags & MAP_SHARED)) return -1;
+  struct proc *p = myproc();
+  struct vma *vma = p->procvma;
+  for(int i = 0; i < MAXVMA; i++){
+    if(vma[i].vaild == 0) {
+      vma[i].addr = p->sz;
+      vma[i].vaild = 1;
+      vma[i].length = PGROUNDUP(length);
+      vma[i].flags = flags;
+      vma[i].prot = prot;
+      vma[i].f = filedup(f);
+      vma[i].off = 0;
+      p->sz += p->procvma[i].length;
+      return p->procvma[i].addr;
+    }
+  }
+  // printf("this is mmap\n");
+  return 0;
+}
+
+// int munmap(void *addr, int length);
+uint64
+sys_munmap(void) {
+  uint64 addr;
+  int length;
+  if(argaddr(0, &addr) < 0 || argint(1, &length) < 0)
+    return -1;
+
+  int i;
+  struct proc* p = myproc();
+  for(i = 0; i < MAXVMA; ++i) {
+    if(p->procvma[i].vaild && p->procvma[i].length >= length) {
+      // 根据提示，munmap的地址范围只能是
+      // 1. 起始位置
+      if(p->procvma[i].addr == addr) {
+        p->procvma[i].addr += length;
+        p->procvma[i].length -= length;
+        break;
+      }
+      // 2. 结束位置
+      if(addr + length == p->procvma[i].addr + p->procvma[i].length) {
+        p->procvma[i].length -= length;
+        break;
+      }
+    }
+  }
+  if(i == MAXVMA)
+    return -1;
+
+  // 将MAP_SHARED页面写回文件系统
+  if(p->procvma[i].flags == MAP_SHARED && (p->procvma[i].prot & PROT_WRITE) != 0) {
+    filewrite(p->procvma[i].f, addr, length);
+  }
+
+  // 判断此页面是否存在映射
+  uvmunmap(p->pagetable, addr, length / PGSIZE, 1);
+
+  // 当前VMA中全部映射都被取消
+  if(p->procvma[i].length == 0) {
+    fileclose(p->procvma[i].f);
+    p->procvma[i].vaild = 0;
+  }
+
+  return 0;
+}
+
